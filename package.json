@@ -5,6 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "start": "node -r dotenv/config index.js dotenv_config_path=./secrets/.env",
     "test": "echo ok"
   },
   "repository": {
@@ -18,6 +19,7 @@
   },
   "homepage": "https://github.com/Likely-Tim/Riebot-v4#readme",
   "dependencies": {
+    "@discordjs/builders": "^1.3.0",
     "discord.js": "^14.6.0",
     "dotenv": "^16.0.3"
   }
