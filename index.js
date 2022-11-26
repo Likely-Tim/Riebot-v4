@@ -4,6 +4,7 @@ import logger from './utils/logger.js';
 import { fileURLToPath } from 'node:url';
 import initializeServer from './server.js';
 import refreshSlashCommands from './slash_refresh.js';
+import { reinitializeCollectors } from './utils/collector_manager.js';
 import { Client, Collection, Events, GatewayIntentBits } from 'discord.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -17,7 +18,8 @@ startUp();
 
 async function startUp() {
   initializeServer();
-  refreshSlashCommands();
+  await refreshSlashCommands();
+  await reinitializeCollectors();
 
   discordClient.commands = new Collection();
   const commandsPath = path.join(__dirname, 'commands');
@@ -61,3 +63,5 @@ discordClient.on(Events.InteractionCreate, async (interaction) => {
 });
 
 discordClient.login(process.env.DISCORD_TOKEN);
+
+export default discordClient;

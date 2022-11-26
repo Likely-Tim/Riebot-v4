@@ -6,9 +6,15 @@ const SPOTIFY_ID = process.env.SPOTIFY_ID;
 const SPOTIFY_SECRET = process.env.SPOTIFY_SECRET;
 
 class Spotify {
-  async refreshUserToken(userId) {
-    logger.info(`[Spotify] Refreshing token for user ${userId}`);
-    const refreshToken = await dbTokens.get(`spotifyRefresh_${userId}`);
+  async refreshToken(userId) {
+    let refreshToken;
+    if (userId) {
+      logger.info(`[Spotify] Refreshing token for user ${userId}`);
+      refreshToken = await dbTokens.get(`spotifyRefresh_${userId}`);
+    } else {
+      logger.info(`[Spotify] Refreshing general token`);
+      refreshToken = await dbTokens.get(`spotifyRefresh`);
+    }
     const url = 'https://accounts.spotify.com/api/token';
     const data = {
       client_id: SPOTIFY_ID,
@@ -27,7 +33,11 @@ class Spotify {
     } else {
       logger.info(`[Spotify] Refreshed Token`);
       response = await response.json();
-      await dbTokens.set(`spotifyAccess_${userId}`, response.access_token);
+      if (userId) {
+        await dbTokens.set(`spotifyAccess_${userId}`, response.access_token);
+      } else {
+        await dbTokens.set(`spotifyAccess`, response.access_token);
+      }
       return true;
     }
   }
@@ -65,12 +75,52 @@ class Spotify {
       }
       case 401: {
         logger.info(`[Spotify] Expired Token`);
-        if (await this.refreshUserToken(userId)) {
-          return await this.currentlyPlaying(userId, uri);
+        if (await this.refreshToken(userId)) {
+          return await this.currentlyPlaying(userId, isUri);
         }
       }
       default: {
         throw new Error(`[Spotify] Failed to get currently playing with status: ${response.status}`);
+      }
+    }
+  }
+
+  async search(query) {
+    logger.info(`[Spotify] Searching for "${query}"`);
+    const accessToken = await dbTokens.get('spotifyAccess');
+    if (!accessToken) {
+      return null;
+    }
+    const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track,artist,album&limit=5`;
+    let response = await fetch(url, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    switch (response.status) {
+      case 200: {
+        logger.info(`[Spotify] Got search results`);
+        response = await response.json();
+        const types = ['tracks', 'albums', 'artists'];
+        const items = {};
+        for (const type of types) {
+          const spotifyInfo = [];
+          if (response[type]) {
+            for (const item of response[type].items) {
+              spotifyInfo.push({ spotifyUrl: item.external_urls.spotify, spotifyUri: item.uri });
+            }
+          }
+          items[type] = spotifyInfo;
+        }
+        return items;
+      }
+      case 401: {
+        logger.info(`[Spotify] Expired Token`);
+        if (await this.refreshToken()) {
+          return await this.search(query);
+        }
+      }
+      default: {
+        throw new Error(`Failed to get search results with status: ${response.status}`);
       }
     }
   }

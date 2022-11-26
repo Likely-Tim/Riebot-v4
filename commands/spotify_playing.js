@@ -1,5 +1,5 @@
-import { SlashCommandBuilder } from '@discordjs/builders';
 import Spotify from '../utils/spotify.js';
+import { SlashCommandBuilder } from 'discord.js';
 
 const BASE_URL = process.env.BASE_URL;
 
