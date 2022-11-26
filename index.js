@@ -1,6 +1,8 @@
-import fs from 'node:fs';
-import path from 'node:path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import logger from './utils/logger.js';
 import { fileURLToPath } from 'node:url';
+import initializeServer from './server.js';
 import refreshSlashCommands from './slash_refresh.js';
 import { Client, Collection, Events, GatewayIntentBits } from 'discord.js';
 
@@ -11,23 +13,29 @@ const discordClient = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
 });
 
-discordClient.commands = new Collection();
-const commandsPath = path.join(__dirname, 'commands');
-const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js'));
+startUp();
 
-for (const file of commandFiles) {
-  const filePath = path.join(commandsPath, file);
-  let command = await import(`file://${filePath}`);
-  if ('data' in command && 'execute' in command) {
-    discordClient.commands.set(command.data.name, command);
-  } else {
-    console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+async function startUp() {
+  initializeServer();
+  refreshSlashCommands();
+
+  discordClient.commands = new Collection();
+  const commandsPath = path.join(__dirname, 'commands');
+  const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js'));
+
+  for (const file of commandFiles) {
+    const filePath = path.join(commandsPath, file);
+    let command = await import(`file://${filePath}`);
+    if ('data' in command && 'execute' in command) {
+      discordClient.commands.set(command.data.name, command);
+    } else {
+      logger.info(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+    }
   }
 }
 
-discordClient.once(Events.ClientReady, async () => {
-  await refreshSlashCommands();
-  console.log('Discord Client Ready');
+discordClient.once(Events.ClientReady, () => {
+  logger.info('Discord Client Ready');
 });
 
 discordClient.on(Events.InteractionCreate, async (interaction) => {
@@ -38,9 +46,10 @@ discordClient.on(Events.InteractionCreate, async (interaction) => {
   const command = discordClient.commands.get(interaction.commandName);
 
   if (!command) {
-    console.error(`No command matching ${interaction.commandName} was found.`);
+    await interaction.reply(`No command matching ${interaction.commandName} was found.`);
   } else {
     try {
+      logger.info(`[Command] Executing ${interaction.commandName}`);
       await command.execute(interaction);
     } catch (error) {
       console.error(error);
