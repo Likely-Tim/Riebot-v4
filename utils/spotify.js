@@ -49,12 +49,14 @@ class Spotify {
       case 200: {
         logger.info(`[Spotify] Got Currently Playing`);
         response = await response.json();
-        if (response.currently_playing_type === 'ad') {
-          return 'Ad';
-        } else if (isUri) {
-          return response.item.uri;
+        if (response.currently_playing_type === 'track') {
+          if (isUri) {
+            return response.item.uri;
+          } else {
+            return response.item.external_urls.spotify;
+          }
         } else {
-          return response.item.external_urls.spotify;
+          return response.currently_playing_type;
         }
       }
       case 204: {

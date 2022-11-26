@@ -51,8 +51,10 @@ discordClient.on(Events.InteractionCreate, async (interaction) => {
     try {
       logger.info(`[Command] Executing ${interaction.commandName}`);
       await command.execute(interaction);
+      logger.info(`[Command] Executed ${interaction.commandName} Successfully`);
     } catch (error) {
       console.error(error);
+      logger.error(`[Command] Error Executing ${interaction.commandName}`);
       await interaction.reply('There was an error while executing this command!');
     }
   }
