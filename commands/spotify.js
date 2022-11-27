@@ -19,13 +19,13 @@ export async function execute(interaction) {
   const response = await Spotify.search(query);
   if (!response) {
     await interaction.editReply({ content: `Error with general spotify token\n${BASE_URL}auth/spotify`, ephemeral: true });
-  } else {
-    const messageContent = await determineMessage(response);
-    await setDatabase(response);
-    const messageSent = await interaction.editReply(messageContent);
-    await disablePreviousCollector(interaction.commandName, messageSent.channelId, messageSent.id);
-    spotifyButtonInteraction(messageSent);
+    return;
   }
+  const messageContent = await determineMessage(response);
+  await setDatabase(response);
+  const messageSent = await interaction.editReply(messageContent);
+  await disablePreviousCollector(interaction.commandName, messageSent.channelId, messageSent.id);
+  spotifyButtonInteraction(messageSent);
 }
 
 export function spotifyButtonInteraction(message) {

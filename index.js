@@ -14,8 +14,6 @@ const discordClient = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
 });
 
-startUp();
-
 async function startUp() {
   initializeServer();
   await refreshSlashCommands();
@@ -36,8 +34,9 @@ async function startUp() {
   }
 }
 
-discordClient.once(Events.ClientReady, () => {
+discordClient.once(Events.ClientReady, async () => {
   logger.info('Discord Client Ready');
+  await startUp();
 });
 
 discordClient.on(Events.InteractionCreate, async (interaction) => {
@@ -55,9 +54,9 @@ discordClient.on(Events.InteractionCreate, async (interaction) => {
       await command.execute(interaction);
       logger.info(`[Command] Executed ${interaction.commandName} Successfully`);
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       logger.error(`[Command] Error Executing ${interaction.commandName}`);
-      await interaction.reply('There was an error while executing this command!');
+      await interaction.editReply('There was an error while executing this command!');
     }
   }
 });

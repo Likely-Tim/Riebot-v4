@@ -49,12 +49,7 @@ class Spotify {
       return null;
     }
     const url = 'https://api.spotify.com/v1/me/player/currently-playing';
-    let response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    let response = await sendGetRequest(url, accessToken);
     switch (response.status) {
       case 200: {
         logger.info(`[Spotify] Got Currently Playing`);
@@ -92,10 +87,7 @@ class Spotify {
       return null;
     }
     const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track,artist,album&limit=5`;
-    let response = await fetch(url, {
-      method: 'GET',
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
+    let response = await sendGetRequest(url, accessToken);
     switch (response.status) {
       case 200: {
         logger.info(`[Spotify] Got search results`);
@@ -120,10 +112,66 @@ class Spotify {
         }
       }
       default: {
-        throw new Error(`Failed to get search results with status: ${response.status}`);
+        throw new Error(`[Spotify] Failed to get search results with status: ${response.status}`);
       }
     }
   }
+
+  async getTopPlayed(userId, type) {
+    logger.info(`[Spotify] Getting top played for user ${userId}`);
+    const timeRanges = {
+      shortTerm: 'short_term',
+      mediumTerm: 'medium_term',
+      longTerm: 'long_term',
+    };
+    const items = {};
+    for (const timeRange in timeRanges) {
+      const url = `https://api.spotify.com/v1/me/top/${type}?time_range=${timeRanges[timeRange]}&limit=10`;
+      const topItems = await spotifyTopRequestor(url, userId);
+      if (!topItems) {
+        return null;
+      }
+      items[timeRange] = await spotifyTopRequestor(url, userId);
+    }
+    return items;
+  }
+}
+
+async function spotifyTopRequestor(url, userId) {
+  const accessToken = await dbTokens.get(`spotifyAccess_${userId}`);
+  if (!accessToken) {
+    return null;
+  }
+  let response = await sendGetRequest(url, accessToken);
+  switch (response.status) {
+    case 200: {
+      response = await response.json();
+      const items = [];
+      for (const item of response.items) {
+        items.push({ spotifyUrl: item.external_urls.spotify, spotifyUri: item.uri });
+      }
+      return items;
+    }
+    case 401: {
+      logger.info(`[Spotify] Expired Token`);
+      if (await this.refreshToken(userId)) {
+        return await spotifyTopRequestor(url, userId);
+      }
+    }
+    default: {
+      throw new Error(`[Spotify] Failed to get top played with status: ${response.status}`);
+    }
+  }
+}
+
+async function sendGetRequest(url, accessToken) {
+  let response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  return response;
 }
 
 export default new Spotify();

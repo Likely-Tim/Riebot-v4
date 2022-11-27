@@ -4,12 +4,14 @@ import { disableAllRows } from './buttons.js';
 
 // Interactions
 import { spotifyButtonInteraction } from '../commands/spotify.js';
+import { spotifyTopButtonInteraction } from '../commands/spotify_top.js';
 
 import * as dbMessages from './databases/messages.js';
 
-const COMMAND_WITH_COLLECTORS = ['spotify'];
+const COMMAND_WITH_COLLECTORS = ['spotify', 'spotify-top'];
 const COMMAND_MAP = {
   spotify: spotifyButtonInteraction,
+  'spotify-top': spotifyTopButtonInteraction,
 };
 
 export async function disablePreviousCollector(commandName, newChannelId, newMessageId) {

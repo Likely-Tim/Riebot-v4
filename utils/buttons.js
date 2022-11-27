@@ -5,6 +5,9 @@ const prevButton = new ButtonBuilder().setCustomId('prev').setEmoji('⬅️').se
 const trackButton = new ButtonBuilder().setCustomId('track').setLabel('Track').setStyle(ButtonStyle.Primary);
 const artistButton = new ButtonBuilder().setCustomId('artist').setLabel('Artist').setStyle(ButtonStyle.Primary);
 const albumButton = new ButtonBuilder().setCustomId('album').setLabel('Album').setStyle(ButtonStyle.Primary);
+const shortTermButton = new ButtonBuilder().setCustomId('shortTerm').setLabel('Short Term').setStyle(ButtonStyle.Primary);
+const mediumTermButton = new ButtonBuilder().setCustomId('mediumTerm').setLabel('Medium Term').setStyle(ButtonStyle.Primary);
+const longTermButton = new ButtonBuilder().setCustomId('longTerm').setLabel('Long Term').setStyle(ButtonStyle.Primary);
 
 const buttonsMap = {
   next: nextButton,
@@ -12,6 +15,9 @@ const buttonsMap = {
   track: trackButton,
   artist: artistButton,
   album: albumButton,
+  shortTerm: shortTermButton,
+  mediumTerm: mediumTermButton,
+  longTerm: longTermButton,
 };
 
 export function getActionRowButtons(buttons) {

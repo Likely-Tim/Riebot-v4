@@ -12,7 +12,6 @@ export async function execute(interaction) {
   if (!track) {
     await interaction.editReply({ content: `${BASE_URL}auth/discord?task=spotify`, ephemeral: true });
     return;
-  } else {
-    await interaction.editReply(track);
   }
+  await interaction.editReply(track);
 }
