@@ -111,7 +111,7 @@ export function buildVa(va) {
   embed.setColor('#571d19');
   embed.setTimestamp();
   const description = NodeHtmlMarkdown.translate(va.descriptionHtml) || 'No description.';
-  embed.setDescription(description > 4096 ? description.slice(0, 4093) + '...' : description);
+  embed.setDescription(description.length > 4096 ? description.slice(0, 4093) + '...' : description);
   embed.addFields(
     { name: '\u200B', value: '\u200B' },
     {
