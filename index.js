@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import logger from './utils/logger.js';
+import { cronJobs } from './js/cron.js';
 import { fileURLToPath } from 'node:url';
 import initializeServer from './server.js';
 import refreshSlashCommands from './slash_refresh.js';
@@ -32,6 +33,7 @@ async function startUp() {
       logger.info(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
     }
   }
+  cronJobs(discordClient);
 }
 
 discordClient.once(Events.ClientReady, async () => {
