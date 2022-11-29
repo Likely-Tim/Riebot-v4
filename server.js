@@ -6,7 +6,7 @@ import logger from './utils/logger.js';
 import { readFileSync } from 'node:fs';
 import cookieParser from 'cookie-parser';
 import { fileURLToPath } from 'node:url';
-import express_openid_connect from 'express-openid-connect';
+import * as express_openid_connect from 'express-openid-connect';
 const { auth, requiresAuth } = express_openid_connect;
 
 const app = express();

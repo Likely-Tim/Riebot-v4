@@ -6,6 +6,8 @@ import { getActionRowButtons, disableButton, enableButton } from '../utils/butto
 
 import * as dbSpotifyTop from '../utils/databases/spotify_top.js';
 
+const BASE_URL = process.env.BASE_URL;
+
 export const data = new SlashCommandBuilder()
   .setName('spotify-top')
   .setDescription('Top Played')
