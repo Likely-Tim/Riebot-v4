@@ -1,8 +1,13 @@
 import { Level } from 'level';
 import logger from '../logger.js';
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const db = new Level('../../databases/tokens');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const db = new Level(path.join(__dirname, '../../databases/tokens'));
 
 const CRYPTO_PASSWORD = process.env.CRYPTO_PASSWORD;
 const ALGORITHM = 'aes-256-cbc';

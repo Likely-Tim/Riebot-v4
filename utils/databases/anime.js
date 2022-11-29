@@ -1,7 +1,12 @@
 import { Level } from 'level';
 import logger from '../logger.js';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const db = new Level('../../databases/anime');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const db = new Level(path.join(__dirname, '../../databases/anime'));
 const embeds = db.sublevel('', { valueEncoding: 'json' });
 const jsons = db.sublevel('', { valueEncoding: 'json' });
 

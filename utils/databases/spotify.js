@@ -1,7 +1,12 @@
 import { Level } from 'level';
 import logger from '../logger.js';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const db = new Level('../../databases/spotify');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const db = new Level(path.join(__dirname, '../../databases/spotify'));
 
 export async function set(key, value) {
   logger.info(`[DB] Setting key '${key}' with value '${value}'`);
