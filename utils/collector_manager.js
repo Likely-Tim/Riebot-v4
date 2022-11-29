@@ -4,17 +4,25 @@ import { disableAllRows } from './buttons.js';
 
 // Interactions
 import { spotifyButtonInteraction } from '../commands/spotify.js';
+import { animeShowSelectInteraction, animeCharacterSelectInteraction, animeStaffSelectInteraction, animeShowButtonInteraction, animeCharacterButtonInteraction, animeVaButtonInteraction } from '../commands/anime.js';
 import { spotifyTopButtonInteraction } from '../commands/spotify_top.js';
 
+import * as dbAnime from './databases/anime.js';
 import * as dbMessages from './databases/messages.js';
 
-const COMMAND_WITH_COLLECTORS = ['spotify', 'spotify-top'];
+const COMMAND_WITH_COLLECTORS = ['spotify', 'spotify-top', 'animeShowSelect', 'animeStaffSelect', 'animeCharacterSelect', 'anime'];
 const COMMAND_MAP = {
   spotify: spotifyButtonInteraction,
   'spotify-top': spotifyTopButtonInteraction,
+  animeShowSelect: animeShowSelectInteraction,
+  animeStaffSelect: animeStaffSelectInteraction,
+  animeCharacterSelect: animeCharacterSelectInteraction,
+  animeShow: animeShowButtonInteraction,
+  animeVa: animeVaButtonInteraction,
+  animeCharacter: animeCharacterButtonInteraction,
 };
 
-export async function disablePreviousCollector(commandName, newChannelId, newMessageId) {
+export async function disablePreviousCollector(commandName, newChannelId, newMessageId, extra) {
   try {
     const oldChannelId = await dbMessages.get(`${commandName}ChannelId`);
     const oldMessageId = await dbMessages.get(`${commandName}MessageId`);
@@ -38,7 +46,12 @@ export async function reinitializeCollectors() {
       const oldMessageId = await dbMessages.get(`${commandName}MessageId`);
       const oldChannel = await client.channels.fetch(oldChannelId);
       const oldMessage = await oldChannel.messages.fetch(oldMessageId);
-      COMMAND_MAP[commandName](oldMessage);
+      if (commandName === 'anime') {
+        const type = await dbAnime.get('type');
+        COMMAND_MAP[`${commandName}${type.charAt(0).toUpperCase() + type.slice(1)}`](oldMessage);
+      } else {
+        COMMAND_MAP[commandName](oldMessage);
+      }
       logger.info(`[Collector Manager] Reinitialized for command ${commandName}`);
     } catch (error) {
       logger.warn(`[Collector Manager] Failed to reinitialize for command ${commandName} with error: ${error}`);

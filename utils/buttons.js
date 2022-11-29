@@ -1,4 +1,4 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, SelectMenuBuilder } from 'discord.js';
 
 const nextButton = new ButtonBuilder().setCustomId('next').setEmoji('➡️').setStyle(ButtonStyle.Secondary);
 const prevButton = new ButtonBuilder().setCustomId('prev').setEmoji('⬅️').setStyle(ButtonStyle.Secondary);
@@ -8,6 +8,11 @@ const albumButton = new ButtonBuilder().setCustomId('album').setLabel('Album').s
 const shortTermButton = new ButtonBuilder().setCustomId('shortTerm').setLabel('Short Term').setStyle(ButtonStyle.Primary);
 const mediumTermButton = new ButtonBuilder().setCustomId('mediumTerm').setLabel('Medium Term').setStyle(ButtonStyle.Primary);
 const longTermButton = new ButtonBuilder().setCustomId('longTerm').setLabel('Long Term').setStyle(ButtonStyle.Primary);
+const animeShowButton = new ButtonBuilder().setCustomId('show').setLabel('Show').setStyle(ButtonStyle.Primary);
+const opAndEdButton = new ButtonBuilder().setCustomId('opAndEd').setLabel('OP & ED').setStyle(ButtonStyle.Primary);
+const scoreButton = new ButtonBuilder().setCustomId('score').setLabel('Score').setStyle(ButtonStyle.Primary);
+const characterButton = new ButtonBuilder().setCustomId('character').setLabel('Characters').setStyle(ButtonStyle.Secondary);
+const vaButton = new ButtonBuilder().setCustomId('va').setLabel('va').setStyle(ButtonStyle.Secondary);
 
 const buttonsMap = {
   next: nextButton,
@@ -18,14 +23,35 @@ const buttonsMap = {
   shortTerm: shortTermButton,
   mediumTerm: mediumTermButton,
   longTerm: longTermButton,
+  animeShow: animeShowButton,
+  opAndEd: opAndEdButton,
+  score: scoreButton,
+  character: characterButton,
+  va: vaButton,
 };
 
 export function getActionRowButtons(buttons) {
   const components = [];
   for (const button of buttons) {
-    components.push(buttonsMap[button.name].setDisabled(button.disabled));
+    if (button.label) {
+      components.push(buttonsMap[button.name].setDisabled(button.disabled || false).setLabel(button.label.length > 80 ? button.label.slice(0, 77) + '...' : button.label));
+    } else {
+      components.push(buttonsMap[button.name].setDisabled(button.disabled || false));
+    }
   }
   return new ActionRowBuilder().addComponents(components);
+}
+
+export function changeButtonLabel(actionRow, buttonCustomId, label) {
+  const components = actionRow.components;
+  for (let i = 0; i < components.length; i++) {
+    if (components[i].data.custom_id === buttonCustomId) {
+      components[i].data.label = label;
+      break;
+    }
+  }
+  actionRow.components = components;
+  return actionRow;
 }
 
 export function disableButton(actionRow, buttonCustomId) {
@@ -67,4 +93,17 @@ export function enableButton(actionRow, buttonCustomId) {
   }
   actionRow.components = components;
   return actionRow;
+}
+
+export function getSelectActionRow(options) {
+  const select = new SelectMenuBuilder().setCustomId('selectMenu').setPlaceholder('Nothing Selected');
+  const choices = [];
+  for (const option of options) {
+    choices.push({
+      label: String(option.label),
+      value: String(option.value),
+    });
+  }
+  select.addOptions(choices);
+  return new ActionRowBuilder().addComponents(select);
 }
