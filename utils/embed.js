@@ -1,5 +1,6 @@
 import { EmbedBuilder } from 'discord.js';
 import { NodeHtmlMarkdown } from 'node-html-markdown';
+import { fahrenheitToBoth, unixTo12Hour, unixToDateAnd12Hour, unixToDay, capitalize } from './misc.js';
 
 const ANILIST_LOGO = 'https://anilist.co/img/icons/android-chrome-512x512.png';
 
@@ -10,6 +11,12 @@ const SHOW_STATUS_COLOR_MAP = {
   CANCELLED: '#000000',
   HIATUS: '#000000',
 };
+
+export function buildBasicEmbed(string) {
+  const embed = new EmbedBuilder();
+  embed.setDescription(string);
+  return embed;
+}
 
 export function buildAnimeShow(show) {
   const embed = new EmbedBuilder();
@@ -123,5 +130,29 @@ export function buildVa(va) {
       inline: true,
     }
   );
+  return embed;
+}
+
+export function buildWeather(weather) {
+  const location = weather.name;
+  const timezone = weather.timezone;
+  const current = weather.current;
+  const forecast = weather.daily;
+  const alerts = weather.alerts;
+  const embed = new EmbedBuilder();
+  embed.setColor('#0099ff');
+  embed.setThumbnail(`http://openweathermap.org/img/wn/${current.weather[0].icon}@2x.png`);
+  embed.setTitle(`${location}, ${unixToDateAnd12Hour(current.dt, timezone)}\n${capitalize(current.weather[0].description)}`);
+  embed.setDescription(`**Current Temperature:** ${fahrenheitToBoth(current.temp)}\n**Feels Like:** ${fahrenheitToBoth(current.feels_like)}\n**Min:** ${fahrenheitToBoth(forecast[0].temp.min)}\n**Max:** ${fahrenheitToBoth(forecast[0].temp.max)}\n**Humidity:** ${current.humidity}%\n**Wind:** ${current.wind_speed} mph\n**Sunrise:** ${unixTo12Hour(current.sunrise, timezone)}\n **Sunset:** ${unixTo12Hour(current.sunset, timezone)}\n**UV Index:** ${current.uvi}`);
+  for (let i = 1; i < 7; i++) {
+    embed.addFields({ name: unixToDay(forecast[i].dt, timezone), value: `**Min:** ${fahrenheitToBoth(forecast[i].temp.min)}\n**Max** ${fahrenheitToBoth(forecast[i].temp.max)}\n**Percipitation:** ${forecast[i].pop * 100}%\n**Wind Gust: ** ${forecast[i].wind_gust.toFixed(1)} mph`, inline: true });
+  }
+  if (alerts) {
+    const alertArray = [];
+    for (let i = 0; i < alerts.length; i++) {
+      alertArray.push(`**- [${unixToDateAnd12Hour(alerts[i].start, timezone)} - ${unixToDateAnd12Hour(alerts[i].end, timezone)}] ${alerts[i].event}**`);
+    }
+    embed.addFields({ name: 'Alerts', value: alertArray.join('\n'), inline: false });
+  }
   return embed;
 }
