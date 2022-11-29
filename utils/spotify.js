@@ -1,4 +1,5 @@
 import logger from './logger.js';
+import fetch from 'node-fetch';
 
 import * as dbTokens from './databases/tokens.js';
 

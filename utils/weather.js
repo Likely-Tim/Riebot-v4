@@ -1,4 +1,5 @@
 import logger from './logger.js';
+import fetch from 'node-fetch';
 import { sendGetRequestGeocoding, sendGetRequestZipCode } from './misc.js';
 
 const OPEN_WEATHER_KEY = process.env.OPEN_WEATHER_KEY;

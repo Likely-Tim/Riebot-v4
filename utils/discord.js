@@ -1,4 +1,5 @@
 import logger from './logger.js';
+import fetch from 'node-fetch';
 
 export async function getUser(accessToken) {
   logger.info(`[Discord] Getting User`);
