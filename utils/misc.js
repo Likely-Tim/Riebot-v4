@@ -1,4 +1,5 @@
 import logger from './logger.js';
+import fetch from 'node-fetch';
 
 const OPEN_WEATHER_KEY = process.env.OPEN_WEATHER_KEY;
 const ZIP_CODE_BASE_KEY = process.env.ZIP_CODE_BASE_KEY;
