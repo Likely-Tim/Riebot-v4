@@ -1,7 +1,12 @@
-const express = require('express');
-const router = express.Router();
-const path = require('path');
-const fs = require('fs');
+import * as fs from 'node:fs';
+import { Router } from 'express';
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
 
 router.get('/', async (request, response) => {
   response.sendFile(path.join(__dirname, '../web/html/logs.html'));

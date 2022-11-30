@@ -43,12 +43,12 @@ app.use(cookieParser());
 
 // Routing
 import authService from './routes/auth.js';
-//import logs from './routes/logs.js';
+import logs from './routes/logs.js';
 //import googleVision from './routes/googleVision.js';
 //import anime from './routes/anime.js';
 
 app.use('/auth', requiresAuth(), authService);
-//app.use('/logs', requiresAuth(), logs);
+app.use('/logs', requiresAuth(), logs);
 //app.use('/googleVision', requiresAuth(), googleVision);
 //app.use('/anime', requiresAuth(), anime);
 
