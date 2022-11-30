@@ -1,12 +1,12 @@
 import * as cron from 'cron';
+import logger from '../utils/logger.js';
 import { sendGetRequestWeather } from '../utils/weather.js';
 import { buildBasicEmbed, buildWeather } from '../utils/embed.js';
 
 const CronJob = cron.CronJob;
-//'0 0 8 * * *'
 export function cronJobs(client) {
   let job = new CronJob(
-    '*/30 * * * * *',
+    '0 0 8 * * *',
     function () {
       dailyWeather(client);
     },
