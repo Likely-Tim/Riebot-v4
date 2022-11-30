@@ -6,10 +6,12 @@ const generalTransport = new winston.transports.DailyRotateFile({
   datePattern: 'MM-DD-YYYY',
   maxFiles: '14',
   dirname: './logs/runtime',
+  handleExceptions: true,
+  handleRejections: true,
 });
 
 const generalLogConfiguration = {
-  transports: [new winston.transports.Console(), generalTransport],
+  transports: [new winston.transports.Console({ handleExceptions: true }), generalTransport],
   format: winston.format.combine(
     winston.format.errors({ stack: true }),
     winston.format.timestamp({
