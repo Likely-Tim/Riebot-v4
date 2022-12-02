@@ -3,6 +3,8 @@ import logger from '../utils/logger.js';
 import { sendGetRequestWeather } from '../utils/weather.js';
 import { buildBasicEmbed, buildWeather } from '../utils/embed.js';
 
+const DISCORD_DEFAULT_CHANNEL = process.env.DISCORD_DEFAULT_CHANNEL;
+
 const CronJob = cron.CronJob;
 export function cronJobs(client) {
   let job = new CronJob(
