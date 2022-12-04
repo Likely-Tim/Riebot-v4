@@ -9,40 +9,48 @@ endOfWeek.setHours(endOfWeek.getHours() + 144);
 const endOfWeekUnix = endOfWeek.getTime() / 1000;
 
 sendGetRequest(`/anime/show/users`).then((response) => {
-  const buttons = ["Airing"];
-  const buttonId = ["Airing"];
+  const buttons = ['Airing'];
+  const buttonId = ['Airing'];
   const users = response.users;
   for (let i = 0; i < users.length; i++) {
     buttons.push(users[i][1]);
     buttonId.push(users[i][0]);
   }
-  buttons.push("+");
-  buttonId.push("+");
+  buttons.push('+');
+  buttonId.push('+');
   generateChoiceButtons(buttons, buttonId);
 });
 
 displayAiringAnime();
 
 function displayAiringAnime() {
-  document.getElementById("loading").style.display = "block";
+  document.getElementById('loading').style.display = 'block';
   sendGetRequest(`/anime/show/airing?start=${midnightUnix}&end=${endOfWeekUnix}`).then((response) => {
-    console.log(response.media);
+    try {
+      document.getElementsByTagName('main')[0].removeChild(document.getElementById('dayContainer'));
+    } catch (error) {
+      console.info(error);
+    }
     const mediaArray = mediaByDay(response.media);
     const sortedMediaArray = sortByPopularity(mediaArray);
     mediaGenerateHtml(sortedMediaArray);
-    document.getElementById("loading").style.display = "none";
+    document.getElementById('loading').style.display = 'none';
   });
 }
 
 function displayUserAnime(userId) {
-  document.getElementById("loading").style.height = "100%";
-  document.getElementById("loading").style.display = "block";
+  document.getElementById('loading').style.height = '100%';
+  document.getElementById('loading').style.display = 'block';
   sendGetRequest(`/anime/show/watching?userId=${userId}`).then((response) => {
-    document.getElementsByTagName("main")[0].removeChild(document.getElementById("dayContainer"));
+    try {
+      document.getElementsByTagName('main')[0].removeChild(document.getElementById('dayContainer'));
+    } catch (error) {
+      console.info(error);
+    }
     const mediaArray = mediaByDay(response.media);
     const sortedMediaArray = sortByPopularity(mediaArray);
     mediaGenerateHtml(sortedMediaArray);
-    document.getElementById("loading").style.display = "none";
+    document.getElementById('loading').style.display = 'none';
   });
 }
 
@@ -53,38 +61,38 @@ function displayUserAnime(userId) {
 // });
 
 function generateChoiceButtons(buttons, buttonId) {
-  const buttonContainer = document.createElement("div");
-  buttonContainer.setAttribute("id", "choiceButtonContainer");
+  const buttonContainer = document.createElement('div');
+  buttonContainer.setAttribute('id', 'choiceButtonContainer');
   for (let i = 0; i < buttons.length; i++) {
-    const button = document.createElement("button");
-    if (buttons[i] == "Airing") {
-      button.setAttribute("class", "choiceButton active");
-    } else if (buttons[i] == "+") {
-      button.setAttribute("class", "choiceButton addition");
+    const button = document.createElement('button');
+    if (buttons[i] == 'Airing') {
+      button.setAttribute('class', 'choiceButton active');
+    } else if (buttons[i] == '+') {
+      button.setAttribute('class', 'choiceButton addition');
     } else {
-      button.setAttribute("class", "choiceButton");
+      button.setAttribute('class', 'choiceButton');
     }
-    button.setAttribute("id", buttonId[i]);
+    button.setAttribute('id', buttonId[i]);
     button.appendChild(document.createTextNode(buttons[i]));
-    button.addEventListener("click", choiceButtonHandler);
+    button.addEventListener('click', choiceButtonHandler);
     buttonContainer.appendChild(button);
   }
-  document.getElementsByTagName("main")[0].appendChild(buttonContainer);
-  document.getElementsByTagName("main")[0].appendChild(document.createElement("hr"));
+  document.getElementsByTagName('main')[0].appendChild(buttonContainer);
+  document.getElementsByTagName('main')[0].appendChild(document.createElement('hr'));
 }
 
 function choiceButtonHandler(event) {
-  if (this.id == "+") {
-    document.cookie = "redirectUrl=/anime/show; sameSite=lax; path=/";
-    document.cookie = "task=addAnimeShowUser; sameSite=lax; path=/";
-    window.location = "/auth/anilist";
+  if (this.id == '+') {
+    document.cookie = 'redirectUrl=/anime/show; sameSite=lax; path=/';
+    document.cookie = 'task=addAnimeShowUser; sameSite=lax; path=/';
+    window.location = '/auth/anilist';
   } else {
-    if (this.classList.contains("active")) {
+    if (this.classList.contains('active')) {
       return;
     }
-    document.getElementsByClassName("active")[0].classList.toggle("active");
-    this.classList.toggle("active");
-    if (this.id == "Airing") {
+    document.getElementsByClassName('active')[0].classList.toggle('active');
+    this.classList.toggle('active');
+    if (this.id == 'Airing') {
       displayAiringAnime();
     } else {
       displayUserAnime(this.id);
@@ -92,23 +100,23 @@ function choiceButtonHandler(event) {
   }
 }
 
-const numberToDiv = { 0: "Sunday", 1: "Monday", 2: "Tuesday", 3: "Wednesday", 4: "Thursday", 5: "Friday", 6: "Saturday", 7: "Future", 8: "Watching", 9: "Unending" };
+const numberToDiv = { 0: 'Sunday', 1: 'Monday', 2: 'Tuesday', 3: 'Wednesday', 4: 'Thursday', 5: 'Friday', 6: 'Saturday', 7: 'Future', 8: 'Watching', 9: 'Unending' };
 
 function mediaGenerateHtml(mediaArray) {
   generateDayHtml(mediaArray);
   for (let dayId = 0; dayId < mediaArray.length; dayId++) {
-    let day = numberToDiv[dayId] + "_Covers";
+    let day = numberToDiv[dayId] + '_Covers';
     for (let i = 0; i < mediaArray[dayId].length; i++) {
       let parent = document.getElementById(day);
-      let div = document.createElement("div");
-      div.setAttribute("class", "cover");
-      let anchor = document.createElement("a");
-      anchor.setAttribute("href", mediaArray[dayId][i].siteUrl);
-      anchor.setAttribute("target", "_blank");
-      anchor.setAttribute("rel", "noopener noreferrer");
-      let image = document.createElement("img");
-      image.setAttribute("src", mediaArray[dayId][i].coverImage.extraLarge);
-      image.setAttribute("class", "covers");
+      let div = document.createElement('div');
+      div.setAttribute('class', 'cover');
+      let anchor = document.createElement('a');
+      anchor.setAttribute('href', mediaArray[dayId][i].siteUrl);
+      anchor.setAttribute('target', '_blank');
+      anchor.setAttribute('rel', 'noopener noreferrer');
+      let image = document.createElement('img');
+      image.setAttribute('src', mediaArray[dayId][i].coverImage.extraLarge);
+      image.setAttribute('class', 'covers');
       anchor.appendChild(image);
       div.appendChild(anchor);
       parent.appendChild(div);
@@ -118,26 +126,26 @@ function mediaGenerateHtml(mediaArray) {
 }
 
 function generateDayHtml(mediaArray) {
-  const container = document.createElement("div");
-  container.setAttribute("id", "dayContainer");
+  const container = document.createElement('div');
+  container.setAttribute('id', 'dayContainer');
   for (let i = 0; i < mediaArray.length; i++) {
     if (mediaArray[i].length == 0) {
       continue;
     }
     const day = numberToDiv[i];
-    const div = document.createElement("div");
-    div.setAttribute("class", "day");
-    div.setAttribute("id", day);
-    const heading = document.createElement("h2");
+    const div = document.createElement('div');
+    div.setAttribute('class', 'day');
+    div.setAttribute('id', day);
+    const heading = document.createElement('h2');
     heading.appendChild(document.createTextNode(day));
     div.appendChild(heading);
-    const covers = document.createElement("div");
-    covers.setAttribute("class", "covers");
-    covers.setAttribute("id", `${day}_Covers`);
+    const covers = document.createElement('div');
+    covers.setAttribute('class', 'covers');
+    covers.setAttribute('id', `${day}_Covers`);
     div.appendChild(covers);
     container.appendChild(div);
   }
-  document.getElementsByTagName("main")[0].appendChild(container);
+  document.getElementsByTagName('main')[0].appendChild(container);
 }
 
 function reorderDays() {
@@ -158,7 +166,7 @@ function reorderDays() {
 function mediaByDay(media) {
   const days = [[], [], [], [], [], [], [], [], [], []];
   for (let i = 0; i < media.length; i++) {
-    if (!(media[i].format == "TV") && !(media[i].format == "TV_SHORT")) {
+    if (!(media[i].format == 'TV') && !(media[i].format == 'TV_SHORT')) {
       continue;
     }
     // There is no known next episode
@@ -222,6 +230,6 @@ function getLatestEpisodeTime(media) {
 }
 
 async function sendGetRequest(url) {
-  const response = await fetch(url, { method: "GET" });
+  const response = await fetch(url, { method: 'GET' });
   return response.json();
 }

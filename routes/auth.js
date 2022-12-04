@@ -1,7 +1,9 @@
 import { Router } from 'express';
+import Anilist from '../utils/anilist.js';
 import { randomStringGenerator } from '../utils/random.js';
 import * as discord from '../utils/discord.js';
 
+import * as dbWeb from '../utils/databases/web.js';
 import * as dbTokens from '../utils/databases/tokens.js';
 import logger from '../utils/logger.js';
 
@@ -11,6 +13,8 @@ const SPOTIFY_ID = process.env.SPOTIFY_ID;
 const SPOTIFY_SECRET = process.env.SPOTIFY_SECRET;
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
+const ANILIST_ID = process.env.ANILIST_ID;
+const ANILIST_SECRET = process.env.ANILIST_SECRET;
 
 const BASE_URL = process.env.BASE_URL;
 const BASE_URL_ENCODED = process.env.BASE_URL_ENCODED;
@@ -33,6 +37,10 @@ router.get('/spotify', async (request, response) => {
     response.cookie('discordId', request.query.discordId, { sameSite: 'lax', maxAge: 600000 });
   }
   response.redirect(`https://accounts.spotify.com/en/authorize?client_id=${SPOTIFY_ID}&response_type=code&redirect_uri=${BASE_URL_ENCODED}auth%2Fspotify%2Fcallback&scope=user-top-read%20user-read-currently-playing%20user-read-playback-state&show_dialog=true`);
+});
+
+router.get('/anilist', async (request, response) => {
+  response.redirect(`https://anilist.co/api/v2/oauth/authorize?client_id=${ANILIST_ID}&redirect_uri=${BASE_URL}auth/anilist/callback&response_type=code`);
 });
 
 router.get('/discord/callback', async (request, response) => {
@@ -98,6 +106,32 @@ router.get('/spotify/callback', async (request, response) => {
   }
 });
 
+router.get('/anilist/callback', async (request, response) => {
+  const task = request.cookies.task;
+  const redirectUrl = request.cookies.redirectUrl;
+  response.clearCookie('task');
+  response.clearCookie('redirectUrl');
+  const accessToken = await anilistAccepted(request.query.code);
+  if (!accessToken) {
+    response.redirect('/?anilistSuccess=false');
+    return;
+  }
+  if (task == 'addAnimeShowUser') {
+    const user = await Anilist.getAuthenticatedUser(accessToken);
+    if (!user) {
+      response.redirect('/?anilistSuccess=false');
+      return;
+    } else {
+      await dbWeb.setAnimeShowUser(user.id, user.name);
+    }
+  }
+  if (redirectUrl) {
+    response.redirect(redirectUrl);
+  } else {
+    response.redirect('/');
+  }
+});
+
 async function discordAccepted(code) {
   const url = 'https://discord.com/api/oauth2/token';
   const data = {
@@ -145,6 +179,31 @@ async function spotifyAccepted(code) {
   }
   response = await response.json();
   return [response.access_token, response.refresh_token];
+}
+
+async function anilistAccepted(code) {
+  const url = 'https://anilist.co/api/v2/oauth/token';
+  const data = {
+    grant_type: 'authorization_code',
+    client_id: ANILIST_ID,
+    client_secret: ANILIST_SECRET,
+    redirect_uri: `${BASE_URL}auth/anilist/callback`,
+    code: code,
+  };
+  let response = await fetch(url, {
+    method: 'POST',
+    header: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Accept: 'application/json',
+    },
+    body: new URLSearchParams(data),
+  });
+  if (response.status != 200) {
+    logger.error(`Spotify callback failed with status: ${response.status}`);
+    return null;
+  }
+  response = await response.json();
+  return response.access_token;
 }
 
 export default router;

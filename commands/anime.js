@@ -92,7 +92,7 @@ export function animeCharacterSelectInteraction(message) {
   collector.on('collect', async (selection) => {
     await selection.deferReply();
     const characterId = parseInt(selection.values[0]);
-    const characterMap = await Anilist.getCharacterInfoFromIds([characterId]);
+    const characterMap = await Anilist.getCharacterDetails([characterId]);
     const character = characterMap[characterId];
     await dbAnime.set(`animeVaId`, character.vaId);
     await dbAnime.set(`animeShowId`, character.mediaId);
@@ -122,7 +122,7 @@ export function animeShowSelectInteraction(message) {
     const showEmbed = buildAnimeShow(show);
     await dbAnime.setEmbed('animeShow', showEmbed);
     const themes = await Anithemes.searchByAnilistId(showId);
-    const trend = await Anilist.getAnimeTrend(showId);
+    const trend = await Anilist.getShowTrend(showId);
     const buttons = [];
     buttons.push({ name: 'animeShow', disabled: true, label: show.title });
     if (themes && themes.length !== 0) {
@@ -187,13 +187,13 @@ export function animeShowButtonInteraction(message) {
       }
       case 'character': {
         const showId = await dbAnime.get('animeShowId');
-        const characters = await Anilist.getAnimeCharactersFromShow(showId);
+        const characters = await Anilist.getShowCharacters(showId);
         await dbAnime.set('characterIndex', 0);
         await dbAnime.set('characterLength', characters.length);
         for (let i = 1; i < characters.length; i++) {
           await dbAnime.setJson(`character${i}`, characters[i]);
         }
-        const va = await Anilist.getVaNameFromCharacter(characters[0].id);
+        const va = await Anilist.getCharacterVa(characters[0].id);
         if (va) {
           characters[0].vaId = va.id;
           characters[0].vaName = va.name;
@@ -234,14 +234,14 @@ export function animeVaButtonInteraction(message) {
     switch (press.customId) {
       case 'character': {
         const vaId = await dbAnime.get(`animeVaId`);
-        let characters = await Anilist.getCharacterIdsFromVa(vaId);
+        let characters = await Anilist.getVaCharacters(vaId);
         await dbAnime.set('characterIndex', 0);
         await dbAnime.set('characterLength', characters.length);
         const characterIds = [];
         for (const character of characters) {
           characterIds.push(character.id);
         }
-        const characterMap = await Anilist.getCharacterInfoFromIds(characterIds);
+        const characterMap = await Anilist.getCharacterDetails(characterIds);
         characters = [];
         for (const characterId of characterIds) {
           characters.push(characterMap[characterId]);
@@ -285,7 +285,7 @@ export function animeCharacterButtonInteraction(message) {
         const showEmbed = buildAnimeShow(show);
         await dbAnime.setEmbed('animeShow', showEmbed);
         const themes = await Anithemes.searchByAnilistId(showId);
-        const trend = await Anilist.getAnimeTrend(showId);
+        const trend = await Anilist.getShowTrend(showId);
         const buttons = [];
         buttons.push({ name: 'animeShow', disabled: true, label: show.title });
         if (themes && themes.length !== 0) {
@@ -335,7 +335,7 @@ export function animeCharacterButtonInteraction(message) {
         index--;
         const character = await dbAnime.getJson(`character${index}`);
         if (!character.vaId) {
-          const va = await Anilist.getVaNameFromCharacter(character.id);
+          const va = await Anilist.getCharacterVa(character.id);
           if (va) {
             character.vaId = va.id;
             character.vaName = va.name;
@@ -375,7 +375,7 @@ export function animeCharacterButtonInteraction(message) {
         index++;
         const character = await dbAnime.getJson(`character${index}`);
         if (!character.vaId) {
-          const va = await Anilist.getVaNameFromCharacter(character.id);
+          const va = await Anilist.getCharacterVa(character.id);
           if (va) {
             character.vaId = va.id;
             character.vaName = va.name;

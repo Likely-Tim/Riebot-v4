@@ -24,6 +24,233 @@ const MONTH_MAP = {
 };
 
 class Anilist {
+  async getAuthenticatedUser(accessToken) {
+    logger.info(`[Anilist] Get Authenticated User`);
+    const search = `
+      query {
+        Viewer {
+          id
+          name
+        }
+      }  
+    `;
+    const url = 'https://graphql.anilist.co';
+    let response = await sendAuthenticatedPostRequest(url, search, accessToken);
+    if (response.status === 200) {
+      logger.info(`[Anilist] Get Authenticated User Response Status: ${response.status}`);
+      response = await response.json();
+      return response.data.Viewer;
+    } else {
+      logger.warn(`[Anilist] Failed Getting Authenticated User Response Status: ${response.status}`);
+      return null;
+    }
+  }
+
+  async getAnimeAiringBetweenTimes(startTime, endTime, page) {
+    if (!page) {
+      page = 1;
+    }
+    logger.info(`[Anilist] Get Anime Airing Between ${startTime}-${endTime} page ${page}`);
+    const search = `
+      query {
+        Page(page: ${page}, perPage: 50) {
+          pageInfo {
+            hasNextPage
+          }
+          airingSchedules(airingAt_greater: ${startTime}, airingAt_lesser: ${endTime}, sort: [TIME]) {
+            media {
+              popularity
+              format
+              title {
+                romaji
+                english
+                native
+              }
+              nextAiringEpisode {
+                timeUntilAiring
+                airingAt
+                episode
+              }
+              episodes
+              airingSchedule {
+                pageInfo {
+                  hasNextPage
+                }
+                nodes {
+                  timeUntilAiring
+                  episode
+                }
+              }
+              coverImage {
+                extraLarge
+                large
+                medium
+              }
+              siteUrl
+              stats {
+                statusDistribution {
+                  status
+                  amount
+                }
+              }
+            }
+          }
+        }
+      }   
+    `;
+    const url = 'https://graphql.anilist.co';
+    let response = await sendPostRequest(url, search);
+    if (response.status === 200) {
+      logger.info(`[Anilist] Got Anime Airing Between Time`);
+      response = await response.json();
+      let media = [];
+      for (const airingSchedule of response.data.Page.airingSchedules) {
+        media.push(airingSchedule.media);
+      }
+      if (response.data.Page.pageInfo.hasNextPage) {
+        response = await this.getAnimeAiringBetweenTimes(startTime, endTime, ++page);
+        media = media.concat(response);
+      }
+      return removeDuplicateMedia(media);
+    } else {
+      logger.warn(`[Anilist] Failed to get airing anime between time with status: ${response.status}`);
+      return null;
+    }
+  }
+
+  async getAnimeSeason(season, year, page) {
+    if (!page) {
+      page = 1;
+    }
+    logger.info(`[Anilist] Get Anime for ${season} ${year} page ${page}`);
+    const search = `
+      query {
+        Page(page: ${page}, perPage: 50) {
+          pageInfo {
+            hasNextPage
+          }
+          media(type: ANIME, format_in: [TV, TV_SHORT], season: ${season}, seasonYear: ${year}, sort: [POPULARITY_DESC]) {
+            format
+            title {
+              romaji
+              english
+              native
+            }
+            episodes
+            nextAiringEpisode {
+              timeUntilAiring
+              airingAt
+              episode
+            }
+            airingSchedule {
+              pageInfo {
+                hasNextPage
+              }
+              nodes {
+                timeUntilAiring
+                episode
+              }
+            }
+            coverImage {
+              extraLarge
+              large
+              medium
+            }
+            siteUrl
+            stats {
+              statusDistribution {
+                status
+                amount
+              }
+            }
+          }
+        }
+      }   
+    `;
+    const url = 'https://graphql.anilist.co';
+    let response = await sendPostRequest(url, search);
+    if (response.status === 200) {
+      logger.info(`[Anilist] Got anime season`);
+      response = await response.json();
+      let media = response.data.Page.media;
+      if (response.data.Page.pageInfo.hasNextPage) {
+        response = await this.getAnimeSeason(season, year, ++page);
+        media = media.concat(response);
+      }
+      return removeDuplicateMedia(media);
+    } else {
+      logger.warn(`[Anilist] Failed to get anime season with status: ${response.status}`);
+      return null;
+    }
+  }
+
+  async getUserAnimeWatching(userId) {
+    logger.info(`[Anilist] Get Anime Watching List for ${userId}`);
+    const search = `
+      query {
+        MediaListCollection(userId: ${userId}, type: ANIME, forceSingleCompletedList: true, status: CURRENT) {
+          lists {
+            entries {
+              media {
+                popularity
+                format
+                title {
+                  romaji
+                  english
+                  native
+                }
+                nextAiringEpisode {
+                  timeUntilAiring
+                  airingAt
+                  episode
+                }
+                episodes
+                airingSchedule {
+                  pageInfo {
+                    hasNextPage
+                  }
+                  nodes {
+                    timeUntilAiring
+                    episode
+                  }
+                }
+                coverImage {
+                  extraLarge
+                  large
+                  medium
+                }
+                siteUrl
+                stats {
+                  statusDistribution {
+                    status
+                    amount
+                  }
+                }
+              }
+            }
+          }
+        }
+      }   
+    `;
+    const url = 'https://graphql.anilist.co';
+    let response = await sendPostRequest(url, search);
+    if (response.status === 200) {
+      logger.info(`[Anilist] Got Anime Watching List`);
+      response = await response.json();
+      const media = [];
+      if (response.data.MediaListCollection.lists.length == 0) {
+        return media;
+      }
+      for (let i = 0; i < response.data.MediaListCollection.lists[0].entries.length; i++) {
+        media.push(response.data.MediaListCollection.lists[0].entries[i].media);
+      }
+      return media;
+    } else {
+      logger.warn(`[Anilist] Failed to get user anime watching list with status ${response.status}`);
+      return null;
+    }
+  }
+
   async searchStaff(query) {
     logger.info(`[Anilist] Searching staff ${query}`);
     const search = `
@@ -51,7 +278,7 @@ class Anilist {
       }
       return items;
     } else {
-      logger.info(`[Anilist] Failed to search for staff`);
+      logger.warn(`[Anilist] Failed to search for staff`);
       return null;
     }
   }
@@ -83,11 +310,11 @@ class Anilist {
       }
       return items;
     } else {
-      logger.info(`[Anilist] Failed to search for characters`);
+      logger.warn(`[Anilist] Failed to search for characters`);
       return null;
     }
   }
-  async getCharacterInfoFromIds(characterIds) {
+  async getCharacterDetails(characterIds) {
     logger.info(`[Anilist] Getting characters from ids ${characterIds}`);
     const search = `
       query {
@@ -189,12 +416,12 @@ class Anilist {
       }
       return idToCharacter;
     } else {
-      logger.info(`[Anilist] Failed to get characters`);
+      logger.warn(`[Anilist] Failed to get characters`);
       return null;
     }
   }
 
-  async getCharacterIdsFromVa(vaId) {
+  async getVaCharacters(vaId) {
     logger.info(`[Anilist] Getting characters for va ${vaId}`);
     const search = `
       query {
@@ -222,7 +449,7 @@ class Anilist {
       }
       return characters;
     } else {
-      logger.info(`[Anilist] Failed to get characters`);
+      logger.warn(`[Anilist] Failed to get characters`);
       return null;
     }
   }
@@ -283,12 +510,12 @@ class Anilist {
       }
       return { name: staff.name.full, imageUrl: staff.image.large, descriptionHtml: staff.description, homeTown: staff.homeTown || 'N/A', age: staff.age || 'N/A', dob: dob, url: staff.siteUrl, characters: staff.characters.nodes.length };
     } else {
-      logger.info(`[Anilist] Failed to get voice actor id ${characterId}`);
+      logger.warn(`[Anilist] Failed to get voice actor id ${characterId}`);
       return null;
     }
   }
 
-  async getVaNameFromCharacter(characterId) {
+  async getCharacterVa(characterId) {
     logger.info(`[Anilist] Getting voice actor name with character id ${characterId}`);
     const search = `
       {
@@ -329,12 +556,12 @@ class Anilist {
         return null;
       }
     } else {
-      logger.info(`[Anilist] Failed to get voice actor with characted id ${characterId}`);
+      logger.warn(`[Anilist] Failed to get voice actor with characted id ${characterId}`);
       return null;
     }
   }
 
-  async getAnimeCharactersFromShow(showId) {
+  async getShowCharacters(showId) {
     logger.info(`[Anilist] Getting anime character with id ${showId}`);
     const search = `
       query {
@@ -399,21 +626,21 @@ class Anilist {
       }
       return characters;
     } else {
-      logger.info(`[Anilist] Failed to get anime trend with id ${showId}`);
+      logger.warn(`[Anilist] Failed to get anime trend with id ${showId}`);
       return null;
     }
   }
 
-  async getAnimeTrend(id, pageNum) {
+  async getShowTrend(id, page) {
     logger.info(`[Anilist] Getting anime trend with id ${id}`);
-    if (!pageNum) {
-      pageNum = 1;
+    if (!page) {
+      page = 1;
     }
-    logger.info(`[Anilist] Getting anime trend page ${pageNum}`);
+    logger.info(`[Anilist] Getting anime trend page ${page}`);
     const search = `
       query {
         Media(id: ${id}) {
-          trends (page: ${pageNum}, perPage: 25, releasing:true, sort: [EPISODE_DESC]) {
+          trends (page: ${page}, perPage: 25, releasing:true, sort: [EPISODE_DESC]) {
             pageInfo {
               currentPage
               hasNextPage
@@ -440,11 +667,11 @@ class Anilist {
         }
       }
       if (response.data.Media.trends.pageInfo.hasNextPage && response.data.Media.trends.nodes[response.data.Media.trends.nodes.length - 1].episode) {
-        return [...(await this.getAnimeTrend(id, ++pageNum)), ...trendData];
+        return [...(await this.getShowTrend(id, ++page)), ...trendData];
       }
       return trendData;
     } else {
-      logger.info(`[Anilist] Failed to get anime trend with id ${id}`);
+      logger.warn(`[Anilist] Failed to get anime trend with id ${id}`);
       return null;
     }
   }
@@ -566,7 +793,7 @@ class Anilist {
       }
       return mediaInfo;
     } else {
-      logger.error(`[Anilist] Failed to get show with status ${response.status}`);
+      logger.warn(`[Anilist] Failed to get show with status ${response.status}`);
       return null;
     }
   }
@@ -614,7 +841,7 @@ class Anilist {
         return items;
       }
     } else {
-      logger.error(`[Anilist] Failed to search for show with status ${response.status}`);
+      logger.warn(`[Anilist] Failed to search for show with status ${response.status}`);
       return null;
     }
   }
@@ -632,6 +859,26 @@ async function sendPostRequest(url, search) {
     }),
   });
   return response;
+}
+
+async function sendAuthenticatedPostRequest(url, search, accessToken) {
+  let response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + accessToken,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({
+      query: search,
+    }),
+  });
+  return response;
+}
+
+// Anilist API bug may return duplicates
+function removeDuplicateMedia(media) {
+  return media.filter((value, index, self) => index === self.findIndex((t) => t.siteUrl === value.siteUrl));
 }
 
 export default new Anilist();
