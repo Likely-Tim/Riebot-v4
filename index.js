@@ -5,6 +5,7 @@ import { cronJobs } from './js/cron.js';
 import { fileURLToPath } from 'node:url';
 import initializeServer from './server.js';
 import refreshSlashCommands from './slash_refresh.js';
+import { textExtraction } from './js/text_extraction.js';
 import { reinitializeCollectors } from './utils/collector_manager.js';
 import { Client, Collection, Events, GatewayIntentBits } from 'discord.js';
 
@@ -59,6 +60,15 @@ discordClient.on(Events.InteractionCreate, async (interaction) => {
       logger.error(error);
       logger.error(`[Command] Error Executing ${interaction.commandName}`);
       await interaction.editReply('There was an error while executing this command!');
+    }
+  }
+});
+
+discordClient.on(Events.MessageCreate, async (message) => {
+  if (message.author.bot === false) {
+    if (message.attachments.size) {
+      const messageAttachments = Array.from(message.attachments.values());
+      await textExtraction(messageAttachments);
     }
   }
 });

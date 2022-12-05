@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node -r dotenv/config index.js dotenv_config_path=./secrets/.env",
+    "start": "node --no-experimental-fetch -r dotenv/config index.js dotenv_config_path=./secrets/.env",
     "test": "echo ok"
   },
   "repository": {
@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/Likely-Tim/Riebot-v4#readme",
   "dependencies": {
+    "@google-cloud/vision": "^3.0.1",
     "chartjs-node-canvas": "^4.1.6",
     "cookie-parser": "^1.4.6",
     "cron": "^2.1.0",
@@ -29,6 +30,8 @@
     "level": "^8.0.0",
     "node-fetch": "^3.3.0",
     "node-html-markdown": "^1.2.2",
+    "oci-sdk": "^2.48.1",
+    "oracledb": "^5.5.0",
     "winston": "^3.8.2",
     "winston-daily-rotate-file": "^4.7.1"
   }
